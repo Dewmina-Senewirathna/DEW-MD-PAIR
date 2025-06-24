@@ -46,7 +46,9 @@ if (fs.existsSync('./auth_info_baileys')) {
 
 
 
-  const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay,DisconnectReason, makeInMemoryStore, } = require("@whiskeysockets/baileys");
+  const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, DisconnectReason } = require("@whiskeysockets/baileys");
+const { makeInMemoryStore } = require("@whiskeysockets/baileys/lib/store");
+const P = require("pino");
 
   const store = makeInMemoryStore({ logger: P().child({ level: 'debug', stream: 'store' }) });
 
