@@ -1,319 +1,215 @@
-<html lang="en"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEW-MD v1 - ULTIMATE</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --neon-blue: #00f3ff;
-            --neon-pink: #ff00ff;
-            --cyber-black: #0a0a1a;
-            --cyber-gray: #1a1a2e;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        body {
-            background: var(--cyber-black);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .cyber-grid {
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
-            background-size: 30px 30px;
-            z-index: 0;
-        }
-
-
-
-    .main-container {
-        background: rgba(16, 18, 27, 0.95);
-        backdrop-filter: blur(15px);
-        border-radius: 20px;
-        padding: 3rem;
-        margin: 2rem;
-        border: 2px solid var(--neon-blue);
-        box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
-        position: relative;
-        z-index: 1;
-        max-width: 800px;
-        width: 90%;
-        animation: floatContainer 4s ease-in-out infinite; /* මෙය එක් කරන්න */
-    }
-    @keyframes floatContainer {
-        0%, 100% { 
-            transform: translateY(0) rotate(0deg);
-            box-shadow: 0 0 50px rgba(0, 243, 255, 0.2);
-        }
-        25% { 
-            transform: translateY(-15px) rotate(-1.5deg);
-            box-shadow: 0 15px 60px rgba(0, 243, 255, 0.3);
-        }
-        50% { 
-            transform: translateY(10px) rotate(1.5deg);
-            box-shadow: 0 -10px 60px rgba(0, 243, 255, 0.3);
-        }
-        75% { 
-            transform: translateY(-5px) rotate(0.5deg);
-            box-shadow: 0 5px 60px rgba(0, 243, 255, 0.3);
-        }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DEW-MD v1 - ULTIMATE</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-green: #00a884;
+      --dark-bg: #111b21;
+      --light-bg: #202c33;
+      --hover-bg: #2a3942;
+      --text-color: #e9edef;
+      --error-color: #ff4d4d;
     }
 
-
-        .cyber-header {
-            text-align: center;
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        .cyber-header h1 {
-            color: var(--neon-blue);
-            font-size: 3.5rem;
-            text-shadow: 0 0 30px var(--neon-blue);
-            letter-spacing: 3px;
-            margin-bottom: 1rem;
-            animation: titleGlow 2s infinite alternate;
-        }
-
-        @keyframes titleGlow {
-            from { text-shadow: 0 0 20px var(--neon-blue); }
-            to { text-shadow: 0 0 40px var(--neon-blue); }
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            padding: 2rem 0;
-        }
-
-        .cyber-btn {
-    position: relative;
-    padding: 1.5rem 2rem;
-    background: var(--cyber-gray);
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    overflow: hidden;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
-    animation: buttonFloat 3s ease-in-out infinite;
-}
-
-@keyframes buttonFloat {
-    0%, 100% { 
-        transform: translateY(0) rotate(0deg);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
     }
-    25% { 
-        transform: translateY(-3px) rotate(-0.5deg); 
+
+    body {
+      background-color: var(--dark-bg);
+      color: var(--text-color);
+      height: 100vh;
+      overflow: hidden;
     }
-    50% { 
-        transform: translateY(2px) rotate(0.5deg); 
+
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
     }
-    75% { 
-        transform: translateY(-1px) rotate(0deg); 
+
+    .sidebar {
+      width: 280px;
+      background-color: var(--light-bg);
+      padding: 1.5rem 1rem;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
     }
-}
 
-.cyber-btn:hover {
-    animation: buttonHover 0.5s ease-out forwards;
-    z-index: 2;
-}
-
-@keyframes buttonHover {
-    0% { 
-        transform: scale(1) translateY(0); 
-        box-shadow: 0 0 15px var(--neon-blue);
+    .sidebar h2 {
+      color: var(--main-green);
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+      text-align: center;
     }
-    50% { 
-        transform: scale(1.05) translateY(-5px); 
-        box-shadow: 0 5px 25px var(--neon-pink);
+
+    .sidebar-menu a {
+      display: block;
+      color: var(--text-color);
+      padding: 0.8rem 1rem;
+      margin: 0.5rem 0;
+      background-color: var(--hover-bg);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
     }
-    100% { 
-        transform: scale(1.03) translateY(-2px); 
-        box-shadow: 0 2px 20px var(--neon-blue);
+
+    .sidebar-menu a:hover {
+      background-color: var(--main-green);
+      color: #fff;
     }
-}
 
-        .cyber-btn::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink), var(--neon-blue));
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
+    .main-panel {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      position: relative;
+    }
 
-        .cyber-btn:hover::before {
-            opacity: 1;
-        }
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        .cyber-btn i {
-            font-size: 1.5rem;
-            transition: transform 0.3s;
-        }
+    .main-header h1 {
+      font-size: 2rem;
+      color: var(--main-green);
+    }
 
-        .cyber-btn:hover i {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 5px var(--neon-blue));
-        }
+    .menu-toggle {
+      display: none;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
 
-        .error-btn {
-            background: rgba(255, 50, 50, 0.15);
-        }
+    .button-grid {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
 
-        .error-btn::before {
-            background: linear-gradient(45deg, #ff0000, #ff6b6b);
-        }
+    .grid-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 1rem;
+      background-color: var(--hover-bg);
+      color: white;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
 
-        .particle {
-            position: absolute;
-            pointer-events: none;
-            background: var(--neon-blue);
-            border-radius: 50%;
-            animation: particlePop 1s forwards;
-        }
+    .grid-button:hover {
+      background-color: var(--main-green);
+      color: #fff;
+    }
 
-        @keyframes particlePop {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(3); opacity: 0; }
-        }
+    .grid-button.error {
+      background-color: rgba(255, 50, 50, 0.3);
+    }
 
-        .cyber-footer {
-            margin-top: 3rem;
-            color: var(--neon-blue);
-            text-align: center;
-            font-size: 1rem;
-            text-shadow: 0 0 10px var(--neon-blue);
-        }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: var(--light-bg);
+      font-size: 0.9rem;
+      color: #888;
+    }
 
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 1.5rem;
-                margin: 1rem;
-            }
-            
-            .cyber-header h1 {
-                font-size: 2.5rem;
-            }
-            
-            .cyber-btn {
-                font-size: 1rem;
-                padding: 1rem 1.5rem;
-            }
-        }
-    </style>
+    /* Responsive Mobile */
+    @media (max-width: 768px) {
+      .app-layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1000;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .menu-toggle {
+        display: inline-block;
+      }
+
+      .main-panel {
+        padding: 1rem;
+      }
+
+      .sidebar-menu a {
+        display: block;
+        text-align: left;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="cyber-grid"></div>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <h2><i class="fas fa-robot"></i> DEW-MD v1</h2>
+      <nav class="sidebar-menu">
+        <a href="/qr" target="_blank"><i class="fas fa-qrcode"></i> QR-CODE</a>
+        <a href="/pair" target="_blank"><i class="fas fa-handshake"></i> Pairing Code</a>
+        <a href="https://github.com/hansayalk/hansanew" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+        <a href="https://wa.me/+94701515609?text=HAVE_ERROR_HANSA" target="_blank" style="color: var(--error-color);"><i class="fas fa-bug"></i> Report Error</a>
+        <a href="https://wa.me/+94701515609?text=Hansa" target="_blank"><i class="fas fa-user-secret"></i> Owner</a>
+      </nav>
+    </aside>
 
-    <div class="main-container">
-        <header class="cyber-header">
-            <h1>
-                <i class="fas fa-robot"></i>
-                DEW MD V1
-            </h1>
-            <p style="color: var(--neon-pink); font-size: 1.2rem;">Session Id Manager</p>
-        </header>
+    <!-- Main Panel -->
+    <main class="main-panel">
+      <div class="main-header">
+        <h1>Session ID Manager</h1>
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
 
-        <div class="button-grid">
-            <a href="/qr" class="cyber-btn" target="_blank">
-                <i class="fas fa-qrcode"></i>
-                QR-CODE
-            </a>
+      <div class="button-grid">
+        <a href="/qr" class="grid-button" target="_blank"><i class="fas fa-qrcode"></i> QR Code</a>
+        <a href="/pair" class="grid-button" target="_blank"><i class="fas fa-handshake"></i> Pairing Code</a>
+        <a href="https://github.com/hansayalk/hansanew" class="grid-button" target="_blank"><i class="fab fa-github"></i> Git Repo</a>
+        <a href="https://gitlab.com/dew-coders/dew-md-v1/-/raw/main/DEW-MD-V1-main__2_.zip?inline=false" class="grid-button" target="_blank"><i class="fas fa-download"></i> Download ZIP</a>
+        <a href="https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G" class="grid-button" target="_blank"><i class="fab fa-whatsapp"></i> WA Channel</a>
+        <a href="https://www.youtube.com/channel/UC6RtvfgvOpbABJy8lqNnI5A" class="grid-button" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
+        <a href="https://wa.me/+94701515609?text=HAVE_ERROR_HANSA" class="grid-button error" target="_blank"><i class="fas fa-bug"></i> Report Error</a>
+        <a href="https://wa.me/+94701515609?text=Hansa" class="grid-button" target="_blank"><i class="fas fa-user-secret"></i> Contact Owner</a>
+      </div>
+    </main>
+  </div>
 
-            <a href="/pair" class="cyber-btn" target="_blank">
-                <i class="fas fa-handshake"></i>
-                PAIRING-CODE
-            </a>
+  <footer>
+    © 2025 DEW MD | Powered by Hansa Dewmina
+  </footer>
 
-            <a href="https://github.com/DEW-MD-LK/DEW-MD-V1" class="cyber-btn" target="_blank">
-                <i class="fab fa-github"></i>
-                GIT REPO
-            </a>
-                    
-                     
-            <a href="https://gitlab.com/dew-coders/dew-md-v1/-/raw/main/DEW-MD-V1-main__2_.zip?inline=false" class="cyber-btn" target="_blank">
-                <i class="fab fa-download"></i>
-                DEW MD ZIP DOWNLOAD
-            </a>
-
-
-
-            <a href="https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G" class="cyber-btn" target="_blank">
-                <i class="fab fa-whatsapp"></i>
-                WA-CHANNEL
-            </a>
-
-            <a href="https://www.youtube.com/channel/UC6RtvfgvOpbABJy8lqNnI5A" class="cyber-btn" target="_blank">
-                <i class="fab fa-youtube"></i>
-                DEW MD YT CHANNEL 
-            </a>
-
-            <a href="https://wa.me/+94701515609?text=HAVE_ERROR_HANSA" class="cyber-btn error-btn" target="_blank">
-                <i class="fas fa-bug"></i>
-                ERROR
-            </a>
-
-            <a href="https://wa.me/+94701515609?text=Hansa" class="cyber-btn" target="_blank">
-                <i class="fas fa-user-secret"></i>
-                OWNER
-            </a>
-        </div>
-    </div>
-
-    <footer class="cyber-footer">
-        © 2025 DEW MD | Powered by Hansa Dewmina
-    </footer>
-
-    <script>
-        // Particle Animation
-        document.addEventListener('mousemove', (e) => {
-            const particles = document.createElement('div');
-            particles.className = 'particle';
-            particles.style.left = `${e.clientX}px`;
-            particles.style.top = `${e.clientY}px`;
-            document.body.appendChild(particles);
-            
-            setTimeout(() => particles.remove(), 1000);
-        });
-
-        // Hover Sound Effect
-        const buttons = document.querySelectorAll('.cyber-btn');
-        const hoverSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-        
-        buttons.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                hoverSound.currentTime = 0;
-                hoverSound.play();
-            });
-        });
-
-        // Dynamic Year Update
-        document.querySelector('.cyber-footer').innerHTML += new Date().getFullYear();
-    </script>
-
-</body></html>
+  <script>
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("open");
+    }
+  </script>
+</body>
+</html>
