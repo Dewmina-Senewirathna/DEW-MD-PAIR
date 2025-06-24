@@ -5,7 +5,7 @@
   "description": "A multi-functional WhatsApp bot Pairing Web and QR Scanner.",
   "main": "index.js",
   "engines": {
-        "node": ">=20.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "start": "pm2 start index.js --deep-monitoring --attach --name DEW-MD",
@@ -14,8 +14,8 @@
     "dev": "nodemon index.js"
   },
   "keywords": [
-    "whatsapp-bot", "BotWhatsapp", "whatsapp-web", "whatsapp", "session", "pair-code", "express-pairing", "whatsappbot", "express-session", "whatsapp-api", "pairing", "baileys-md", "baileys-bot",
-    "whatsappLogin", "adiwajshing/baileys", "baileys-md-qr", "multi-device-qr", "whiskey sockets/baileys", "md-pair", "bot-pair", "baileysQrScanner", "botpairing", "WhatsAppPairing", "LinkDevice"
+    "whatsapp-bot", "whatsapp-web", "session", "pair-code", "express-pairing", "whatsapp-api", "baileys-md", "baileys-bot",
+    "qr-scanner", "whiskeysockets", "whatsapp-login", "botpairing", "baileys-session", "WhatsAppPairing"
   ],
   "author": "HansaDewmina",
   "license": "MIT",
@@ -28,7 +28,6 @@
     "pino": "^8.1.0",
     "phone": "3.1.30",
     "body-parser": "^1.20.1",
-    "path": "^0.12.7",
     "express": "^4.18.1",
     "pm2": "^5.4.2",
     "qrcode": "^1.5.3"
