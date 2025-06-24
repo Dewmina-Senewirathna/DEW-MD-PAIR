@@ -61,6 +61,8 @@ router.get('/', async (req, res) => {
                     try {
                         await delay(10000);
                         if (fs.existsSync('./auth_info_baileys/creds.json'));
+console.log("✅ Pairing completed. Restarting server...");
+exec('pm2 restart qasim');
 
                         const auth_path = './auth_info_baileys/';
                         let user = Smd.user.id;
