@@ -1,40 +1,23 @@
 const express = require('express');
 const app = express();
-const path = require('path');
+__path = process.cwd()
 const bodyParser = require("body-parser");
-
 const PORT = process.env.PORT || 8000;
-
-// Define base path
-const basePath = process.cwd();
-
-// Increase max event listeners to avoid memory leaks
-require('events').EventEmitter.defaultMaxListeners = 100;
-
-// Load route modules
-const qrRoute = require('./qr');
-const pairCodeRoute = require('./pair');
-
-// Middlewares
+let server = require('./qr'),
+    code = require('./pair');
+require('events').EventEmitter.defaultMaxListeners = 500;
+app.use('/qr', server);
+app.use('/code', code);
+app.use('/pair',async (req, res, next) => {
+res.sendFile(__path + '/pair.html')
+})
+app.use('/',async (req, res, next) => {
+res.sendFile(__path + '/main.html')
+})
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Route APIs
-app.use('/qr', qrRoute);
-app.use('/code', pairCodeRoute);
-
-// Serve static HTML pages
-app.get('/pair', (req, res) => {
-    res.sendFile(path.join(basePath, 'pair.html'));
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(basePath, 'main.html'));
-});
-
-// Start the server
 app.listen(PORT, () => {
-    console.log(`✅ Server running at http://localhost:${PORT}`);
-});
+    console.log(`Server running on http://localhost:` + PORT)
+})
 
-module.exports = app;
+module.exports = app
