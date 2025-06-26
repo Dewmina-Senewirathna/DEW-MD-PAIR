@@ -23,7 +23,7 @@ const {
     DisconnectReason
 } = require("@whiskeysockets/baileys");
 
-// Ensure the directory is empty when the app starts
+// Clean up on server start
 if (fs.existsSync('./auth_info_baileys')) {
     fs.emptyDirSync(__dirname + '/auth_info_baileys');
 }
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
                 num = num.replace(/[^0-9]/g, '');
                 const code = await Smd.requestPairingCode(num);
                 if (!res.headersSent) {
-                    await res.send({ code });
+                    return res.send({ code });
                 }
             }
 
@@ -60,70 +60,74 @@ router.get('/', async (req, res) => {
                 if (connection === "open") {
                     try {
                         await delay(10000);
-                        if (fs.existsSync('./auth_info_baileys/creds.json'));
+                        if (fs.existsSync('./auth_info_baileys/creds.json')) {
+                            const auth_path = './auth_info_baileys/';
+                            let user = Smd.user.id;
 
-                        const auth_path = './auth_info_baileys/';
-                        let user = Smd.user.id;
-
-                        // Define randomMegaId function to generate random IDs
-                        function randomMegaId(length = 6, numberLength = 4) {
-                            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                            let result = '';
-                            for (let i = 0; i < length; i++) {
-                                result += characters.charAt(Math.floor(Math.random() * characters.length));
+                            function randomMegaId(length = 6, numberLength = 4) {
+                                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                                let result = '';
+                                for (let i = 0; i < length; i++) {
+                                    result += characters.charAt(Math.floor(Math.random() * characters.length));
+                                }
+                                const number = Math.floor(Math.random() * Math.pow(10, numberLength));
+                                return `${result}${number}`;
                             }
-                            const number = Math.floor(Math.random() * Math.pow(10, numberLength));
-                            return `${result}${number}`;
+
+                            const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
+                            const Id_session = mega_url.replace('https://mega.nz/file/', '');
+
+                            const Scan_Id = Id_session;
+                            let msgsss = await Smd.sendMessage(user, { text: Scan_Id });
+                            await Smd.sendMessage(user, { text: MESSAGE }, { quoted: msgsss });
+
+                            await delay(1000);
+                            await fs.emptyDirSync(__dirname + '/auth_info_baileys');
                         }
-
-                        // Upload credentials to Mega
-                        const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
-                        const Id_session = mega_url.replace('https://mega.nz/file/', '');
-
-                        const Scan_Id = Id_session;
-
-                        let msgsss = await Smd.sendMessage(user, { text: Scan_Id });
-                        await Smd.sendMessage(user, { text: MESSAGE }, { quoted: msgsss });
-                        await delay(1000);
-                        try { await fs.emptyDirSync(__dirname + '/auth_info_baileys'); } catch (e) {}
-
                     } catch (e) {
-                        console.log("Error during file upload or message send: ", e);
+                        console.log("❌ Error during file upload or message send:", e);
                     }
-
                     await delay(100);
                     await fs.emptyDirSync(__dirname + '/auth_info_baileys');
                 }
 
-                // Handle connection closures
                 if (connection === "close") {
                     let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
-                    if (reason === DisconnectReason.connectionClosed) {
-                        console.log("Connection closed!");
-                    } else if (reason === DisconnectReason.connectionLost) {
-                        console.log("Connection Lost from Server!");
-                    } else if (reason === DisconnectReason.restartRequired) {
-                        console.log("Restart Required, Restarting...");
-                        SUHAIL().catch(err => console.log(err));
-                    } else if (reason === DisconnectReason.timedOut) {
-                        console.log("Connection TimedOut!");
-                    } else {
-                        console.log('Connection closed with bot. Please run again.');
-                        console.log(reason);
-                        await delay(5000);
-                        exec('pm2 restart qasim');
+
+                    switch (reason) {
+                        case DisconnectReason.connectionClosed:
+                            console.log("❌ Connection closed!");
+                            break;
+                        case DisconnectReason.connectionLost:
+                            console.log("❌ Connection Lost from Server!");
+                            break;
+                        case DisconnectReason.restartRequired:
+                            console.log("🔄 Restart Required, Restarting...");
+                            await delay(5000);
+                            exec('pm2 restart DEW-MD');
+                            break;
+                        case DisconnectReason.timedOut:
+                            console.log("❌ Connection TimedOut!");
+                            break;
+                        default:
+                            console.log("❌ Unknown disconnect reason. Restarting bot...");
+                            console.log(reason);
+                            await delay(5000);
+                            exec('pm2 restart DEW-MD');
+                            break;
                     }
                 }
             });
 
         } catch (err) {
-            console.log("Error in SUHAIL function: ", err);
-            exec('pm2 restart qasim');
-            console.log("Service restarted due to error");
-            SUHAIL();
+            console.log("❌ Error in SUHAIL function:", err);
+            await delay(5000);
+            exec('pm2 restart DEW-MD');
+            console.log("🔁 Restarted via PM2 due to error.");
             await fs.emptyDirSync(__dirname + '/auth_info_baileys');
+
             if (!res.headersSent) {
-                await res.send({ code: "Try After Few Minutes" });
+                res.send({ code: "Try Again in a Few Minutes" });
             }
         }
     }
@@ -132,4 +136,3 @@ router.get('/', async (req, res) => {
 });
 
 module.exports = router;
-                    
