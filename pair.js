@@ -1,8 +1,17 @@
 const express = require('express');
 const fs = require('fs-extra');
 const { exec } = require("child_process");
+let router = express.Router();
 const pino = require("pino");
 const { Boom } = require("@hapi/boom");
+const MESSAGE = process.env.MESSAGE || `
+*SESSION GENERATED SUCCESSFULY* ✅
+> https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
+
+*㋛ DEW-MD BY HANSA DEWMINA*
+> Hansa Dewmina
+> Dew-Coders-LK
+`;
 
 const { upload } = require('./mega');
 const {
@@ -14,129 +23,116 @@ const {
     DisconnectReason
 } = require("@whiskeysockets/baileys");
 
-const router = express.Router();
-
-const MESSAGE = process.env.MESSAGE || `
-*SESSION GENERATED SUCCESSFULY* ✅
-> https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
-
-*㋛ DEW-MD BY HANSA DEWMINA*
-> Hansa Dewmina
-> Dew-Coders-LK
-`;
-
-// Cleanup old sessions on startup
-const AUTH_PATH = './auth_info_baileys';
-if (fs.existsSync(AUTH_PATH)) {
-    fs.emptyDirSync(AUTH_PATH);
+// Clean up on server start
+if (fs.existsSync('./auth_info_baileys')) {
+    fs.emptyDirSync(__dirname + '/auth_info_baileys');
 }
 
-// Route for generating session
 router.get('/', async (req, res) => {
-    let number = req.query.number;
-    if (!number) return res.send({ error: "Phone number required!" });
+    let num = req.query.number;
 
-    await connectToWhatsApp(number.replace(/[^0-9]/g, ''), res);
-});
+    async function SUHAIL() {
+        const { state, saveCreds } = await useMultiFileAuthState(`./auth_info_baileys`);
+        try {
+            let Smd = makeWASocket({
+                auth: {
+                    creds: state.creds,
+                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
+                },
+                printQRInTerminal: false,
+                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+                browser: Browsers.macOS("Safari"),
+            });
 
-// Function to generate random MEGA upload filename
-function randomMegaId(length = 6, numberLength = 4) {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    const number = Math.floor(Math.random() * Math.pow(10, numberLength));
-    return `${result}${number}`;
-}
+            if (!Smd.authState.creds.registered) {
+                await delay(1500);
+                num = num.replace(/[^0-9]/g, '');
+                const code = await Smd.requestPairingCode(num);
+                if (!res.headersSent) {
+                    return res.send({ code });
+                }
+            }
 
-// Main connection logic
-async function connectToWhatsApp(number, res) {
-    const { state, saveCreds } = await useMultiFileAuthState(AUTH_PATH);
+            Smd.ev.on('creds.update', saveCreds);
+            Smd.ev.on("connection.update", async (s) => {
+                const { connection, lastDisconnect } = s;
 
-    try {
-        const sock = makeWASocket({
-            auth: {
-                creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }))
-            },
-            printQRInTerminal: false,
-            logger: pino({ level: "fatal" }),
-            browser: Browsers.macOS("Safari")
-        });
+                if (connection === "open") {
+                    try {
+                        await delay(10000);
+                        if (fs.existsSync('./auth_info_baileys/creds.json')) {
+                            const auth_path = './auth_info_baileys/';
+                            let user = Smd.user.id;
 
-        if (!sock.authState.creds.registered) {
-            await delay(1500);
-            const code = await sock.requestPairingCode(number);
-            if (!res.headersSent) return res.send({ code });
-        }
+                            function randomMegaId(length = 6, numberLength = 4) {
+                                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                                let result = '';
+                                for (let i = 0; i < length; i++) {
+                                    result += characters.charAt(Math.floor(Math.random() * characters.length));
+                                }
+                                const number = Math.floor(Math.random() * Math.pow(10, numberLength));
+                                return `${result}${number}`;
+                            }
 
-        sock.ev.on('creds.update', saveCreds);
+                            const mega_url = await upload(fs.createReadStream(auth_path + 'creds.json'), `${randomMegaId()}.json`);
+                            const Id_session = mega_url.replace('https://mega.nz/file/', '');
 
-        sock.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
-            const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+                            const Scan_Id = Id_session;
+                            let msgsss = await Smd.sendMessage(user, { text: Scan_Id });
+                            await Smd.sendMessage(user, { text: MESSAGE }, { quoted: msgsss });
 
-            if (connection === "open") {
-                try {
-                    console.log("✅ Connected successfully.");
-
-                    await delay(10000);
-                    if (fs.existsSync(`${AUTH_PATH}/creds.json`)) {
-                        const sessionUrl = await upload(
-                            fs.createReadStream(`${AUTH_PATH}/creds.json`),
-                            `${randomMegaId()}.json`
-                        );
-                        const id = sessionUrl.replace("https://mega.nz/file/", "");
-
-                        let msg = await sock.sendMessage(sock.user.id, { text: id });
-                        await sock.sendMessage(sock.user.id, { text: MESSAGE }, { quoted: msg });
+                            await delay(1000);
+                            await fs.emptyDirSync(__dirname + '/auth_info_baileys');
+                        }
+                    } catch (e) {
+                        console.log("❌ Error during file upload or message send:", e);
                     }
-
-                } catch (e) {
-                    console.log("❌ Error during upload or message send:", e);
-                } finally {
-                    await delay(1000);
-                    await fs.emptyDirSync(AUTH_PATH);
+                    await delay(100);
+                    await fs.emptyDirSync(__dirname + '/auth_info_baileys');
                 }
-            }
 
-            if (connection === "close") {
-                console.log(`🔌 Connection closed. Reason: ${reason}`);
+                if (connection === "close") {
+                    let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
 
-                switch (reason) {
-                    case DisconnectReason.connectionClosed:
-                    case DisconnectReason.connectionLost:
-                    case DisconnectReason.timedOut:
-                        console.log("🔁 Reconnecting in 5 seconds...");
-                        await delay(5000);
-                        connectToWhatsApp(number, res);
-                        break;
-
-                    case DisconnectReason.restartRequired:
-                        console.log("🔄 Restart Required. Restarting...");
-                        exec('pm2 restart DEW-MD');
-                        break;
-
-                    default:
-                        console.log("❌ Unknown disconnect reason. Restarting...");
-                        await delay(5000);
-                        exec('pm2 restart DEW-MD');
-                        break;
+                    switch (reason) {
+                        case DisconnectReason.connectionClosed:
+                            console.log("❌ Connection closed!");
+                            break;
+                        case DisconnectReason.connectionLost:
+                            console.log("❌ Connection Lost from Server!");
+                            break;
+                        case DisconnectReason.restartRequired:
+                            console.log("🔄 Restart Required, Restarting...");
+                            await delay(5000);
+                            exec('pm2 restart DEW-MD');
+                            break;
+                        case DisconnectReason.timedOut:
+                            console.log("❌ Connection TimedOut!");
+                            break;
+                        default:
+                            console.log("❌ Unknown disconnect reason. Restarting bot...");
+                            console.log(reason);
+                            await delay(5000);
+                            exec('pm2 restart DEW-MD');
+                            break;
+                    }
                 }
+            });
+
+        } catch (err) {
+            console.log("❌ Error in SUHAIL function:", err);
+            await delay(5000);
+            exec('pm2 restart DEW-MD');
+            console.log("🔁 Restarted via PM2 due to error.");
+            await fs.emptyDirSync(__dirname + '/auth_info_baileys');
+
+            if (!res.headersSent) {
+                res.send({ code: "Try Again in a Few Minutes" });
             }
-        });
-
-    } catch (err) {
-        console.log("❌ Fatal error:", err);
-        await delay(5000);
-        exec('pm2 restart DEW-MD');
-
-        if (!res.headersSent) {
-            res.send({ code: "Try again later." });
         }
-
-        await fs.emptyDirSync(AUTH_PATH);
     }
-}
+
+    await SUHAIL();
+});
 
 module.exports = router;
