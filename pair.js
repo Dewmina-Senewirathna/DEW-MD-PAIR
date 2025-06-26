@@ -3,6 +3,26 @@ const fs = require("fs");
 const { exec } = require("child_process");
 let router = express.Router();
 const pino = require("pino");
+const MESSAGE = process.env.MESSAGE || `
+*SESSION GENERATED SUCCESSFULY* ✅
+
+> උඩ තියෙන්නෙ ඔයාගෙ Sesion ID එක
+> ඔයාට පුලුවන් දැන් ඔයාගෙ Bot Deploy කර ගන්න
+> පල්ලයහ Site එකෙන් පුලුවන් Free Deploy කරගන්න
+
+*Auto Deploy Website* - https://dew-md.free.nf
+
+*Whatsapp Channel* - https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
+
+*Bot Owner* - https://wa.me/+94701515609?text=hi_hansa
+
+*㋛ DEW-MD BY HANSA DEWMINA*
+
+> Hansa Dewmina
+> Dew-Coders-LK
+`;
+
+
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -81,18 +101,10 @@ router.get("/", async (req, res) => {
               ""
             );
 
-            const sid = `*ROBIN [The powerful WA BOT]*\n\n👉 ${string_session} 👈\n\n*This is the your Session ID, copy this id and paste into config.js file*\n\n*You can ask any question using this link*\n\n*wa.me/message/WKGLBR2PCETWD1*\n\n*You can join my whatsapp group*\n\n*https://chat.whatsapp.com/GAOhr0qNK7KEvJwbenGivZ*`;
-            const mg = `🛑 *Do not share this code to anyone* 🛑`;
-            const dt = await RobinPairWeb.sendMessage(user_jid, {
-              image: {
-                url: "https://raw.githubusercontent.com/Dark-Robin/Bot-Helper/refs/heads/main/autoimage/Bot%20robin%20WP.jpg",
-              },
-              caption: sid,
-            });
-            const msg = await RobinPairWeb.sendMessage(user_jid, {
-              text: string_session,
-            });
-            const msg1 = await RobinPairWeb.sendMessage(user_jid, { text: mg });
+              const Scan_Id = string_session;
+              let msgsss = await RobinPairWeb.sendMessage(user_jid, { text: Scan_Id });
+              await RobinPairWeb.sendMessage(user_jid, { text: MESSAGE }, { quoted: msgsss });
+
           } catch (e) {
             exec("pm2 restart DEW-MD");
           }
