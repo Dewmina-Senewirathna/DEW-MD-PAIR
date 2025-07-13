@@ -1,28 +1,10 @@
 const express = require("express");
 const fs = require("fs");
 const { exec } = require("child_process");
+const path = require("path");
+const axios = require("axios");
 let router = express.Router();
 const pino = require("pino");
-const MESSAGE = process.env.MESSAGE || `
-*SESSION GENERATED SUCCESSFULY* ✅
-
-> උඩ තියෙන්නෙ ඔයාගෙ Sesion ID එක
-> ඔයාට පුලුවන් දැන් ඔයාගෙ Bot Deploy කර ගන්න
-> පල්ලයහ Site එකෙන් පුලුවන් Free Deploy කරගන්න
-
-*Auto Deploy Website* - https://dew-md.free.nf
-
-*Whatsapp Channel* - https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
-
-*Bot Owner* - https://wa.me/+94701515609?text=hi_hansa
-
-*㋛ DEW-MD BY HANSA DEWMINA*
-
-> Hansa Dewmina
-> Dew-Coders-LK
-`;
-
-
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -33,13 +15,31 @@ const {
 } = require("@whiskeysockets/baileys");
 const { upload } = require("./mega");
 
+const MESSAGE = process.env.MESSAGE || `*SESSION GENERATED SUCCESSFULY* ✅
+
+> උඩ තියෙන්නෙ ඔයාගෙ Sesion ID එක
+
+*Auto Deploy Website* - https://dew-md.free.nf
+
+*Whatsapp Channel* - https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
+
+*Bot Owner* - https://wa.me/+94701515609?text=hi_hansa
+
+*㋛ DEW-MD BY HANSA DEWMINA*
+
+> Hansa Dewmina
+> Dew-Coders-LK`;
+
 function removeFile(FilePath) {
-  if (!fs.existsSync(FilePath)) return false;
-  fs.rmSync(FilePath, { recursive: true, force: true });
+  if (fs.existsSync(FilePath)) {
+    fs.rmSync(FilePath, { recursive: true, force: true });
+  }
 }
 
 router.get("/", async (req, res) => {
-  let num = req.query.number;
+  let number = req.query.number;
+  if (!number) return res.status(400).send({ error: "Missing number" });
+
   async function RobinPair() {
     const { state, saveCreds } = await useMultiFileAuthState(`./auth_info_baileys`);
     try {
@@ -58,59 +58,86 @@ router.get("/", async (req, res) => {
 
       if (!RobinPairWeb.authState.creds.registered) {
         await delay(1500);
-        num = num.replace(/[^0-9]/g, "");
-        const code = await RobinPairWeb.requestPairingCode(num);
+        number = number.replace(/[^0-9]/g, "");
+        const code = await RobinPairWeb.requestPairingCode(number);
         if (!res.headersSent) {
-          await res.send({ code });
+          res.send({ code });
         }
       }
 
       RobinPairWeb.ev.on("creds.update", saveCreds);
+
       RobinPairWeb.ev.on("connection.update", async (s) => {
         const { connection, lastDisconnect } = s;
         if (connection === "open") {
           try {
             await delay(10000);
-            const sessionPrabath = fs.readFileSync("./auth_info_baileys/creds.json");
-
             const auth_path = "./auth_info_baileys/";
             const user_jid = jidNormalizedUser(RobinPairWeb.user.id);
 
             function randomMegaId(length = 6, numberLength = 4) {
-              const characters =
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+              const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
               let result = "";
               for (let i = 0; i < length; i++) {
-                result += characters.charAt(
-                  Math.floor(Math.random() * characters.length)
-                );
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
               }
-              const number = Math.floor(
-                Math.random() * Math.pow(10, numberLength)
-              );
-              return `${result}${number}`;
+              const num = Math.floor(Math.random() * Math.pow(10, numberLength));
+              return `${result}${num}`;
             }
 
             const mega_url = await upload(
-              fs.createReadStream(auth_path + "creds.json"),
+              fs.createReadStream(path.join(auth_path, "creds.json")),
               `${randomMegaId()}.json`
             );
 
-            const string_session = mega_url.replace(
-              "https://mega.nz/file/",
-              ""
-            );
+            const string_session = mega_url.replace("https://mega.nz/file/", "");
+            const Scan_Id = string_session;
 
-              const Scan_Id = string_session;
-              let msgsss = await RobinPairWeb.sendMessage(user_jid, { text: Scan_Id });
-              await RobinPairWeb.sendMessage(user_jid, { text: MESSAGE }, { quoted: msgsss });
+            const msgsss = await RobinPairWeb.sendMessage(user_jid, { text: Scan_Id });
+            await RobinPairWeb.sendMessage(user_jid, { text: MESSAGE }, { quoted: msgsss });
 
+            // Save to bots.json
+            const botsPath = path.join(__dirname, "bots.json");
+            const bots = fs.existsSync(botsPath) ? JSON.parse(fs.readFileSync(botsPath)) : [];
+            const botExists = bots.find((b) => b.number === number);
+            const newBot = {
+              number,
+              owner: "AutoPair",
+              session: Scan_Id,
+              prefix: ".",
+              mode: "public",
+              antiLink: true,
+              autoReply: true,
+              autoVoice: false,
+              autoReact: true,
+              autoType: false,
+              statusView: false,
+              statusReact: false,
+              statusReply: false,
+              autoBlock: false,
+              readCmd: true,
+              sendWelcome: false,
+              antiBad: false,
+              autoRec: false,
+              autoBio: false,
+              online: true,
+            };
+            if (!botExists) bots.push(newBot);
+            else Object.assign(botExists, newBot);
+            fs.writeFileSync(botsPath, JSON.stringify(bots, null, 2));
+
+            // Deploy
+            await axios
+              .post("https://dew-md.up.railway.app/api/deploy", newBot)
+              .then(() => console.log("✅ Bot auto-deploy request sent"))
+              .catch((err) => console.error("❌ Deploy failed:", err.message));
           } catch (e) {
+            console.log("❌ Pairing failed, restarting bot:", e.message);
             exec("pm2 restart DEW-MD");
           }
 
           await delay(100);
-          return await removeFile("./auth_info_baileys");
+          removeFile("./auth_info_baileys");
           process.exit(0);
         } else if (
           connection === "close" &&
@@ -119,20 +146,20 @@ router.get("/", async (req, res) => {
           lastDisconnect.error.output.statusCode !== 401
         ) {
           await delay(10000);
-          RobinPair();
+          RobinPair(); // recursive call
         }
       });
     } catch (err) {
+      console.log("❌ Main error caught:", err.message);
       exec("pm2 restart DEW-MD");
-      console.log("service restarted");
-      RobinPair();
-      await removeFile("./auth_info_baileys");
+      removeFile("./auth_info_baileys");
       if (!res.headersSent) {
-        await res.send({ code: "Service Unavailable" });
+        res.send({ code: "Service Unavailable" });
       }
     }
   }
-  return await RobinPair();
+
+  await RobinPair();
 });
 
 process.on("uncaughtException", function (err) {
