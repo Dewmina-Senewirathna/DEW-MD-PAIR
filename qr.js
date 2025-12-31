@@ -1,126 +1,172 @@
-const { exec } = require("child_process");
-const { upload } = require('./mega');
+const { makeid } = require('./gen-id');
 const express = require('express');
-const router = express.Router();
-const fs = require("fs-extra");
-const path = require('path');
+const QRCode = require('qrcode');
+const fs = require('fs');
+let router = express.Router();
 const pino = require("pino");
-const { toBuffer } = require("qrcode");
-const { Boom } = require("@hapi/boom");
-
 const {
-  default: SuhailWASocket,
-  useMultiFileAuthState,
-  Browsers,
-  delay,
-  DisconnectReason
+    default: makeWASocket,
+    useMultiFileAuthState,
+    delay,
+    makeCacheableSignalKeyStore,
+    Browsers,
+    jidNormalizedUser
 } = require("@whiskeysockets/baileys");
+const axios = require('axios');
 
-const MESSAGE = process.env.MESSAGE || `
-*SESSION GENERATED SUCCESSFULY* ✅
-> https://whatsapp.com/channel/0029Vb2bFCq0LKZGEl4xEe2G
-
-*㋛ DEW-MD BY HANSA DEWMINA*
-> Hansa Dewmina
-> Dew-Coders-LK`;
-
-if (fs.existsSync('./auth_info_baileys')) {
-  fs.emptyDirSync(path.join(__dirname, '/auth_info_baileys'));
+function removeFile(FilePath) {
+    if (!fs.existsSync(FilePath)) return false;
+    fs.rmSync(FilePath, { recursive: true, force: true });
 }
 
 router.get('/', async (req, res) => {
-  async function SUHAIL() {
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, '/auth_info_baileys'));
-
-    try {
-      const Smd = SuhailWASocket({
-        printQRInTerminal: false,
-        logger: pino({ level: "silent" }),
-        browser: Browsers.macOS("Desktop"),
-        auth: state
-      });
-
-      Smd.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
-        if (qr && !res.headersSent) {
-          try {
-            const qrBuffer = await toBuffer(qr);
-            res.setHeader('Content-Type', 'image/png');
-            res.end(qrBuffer);
-            return;
-          } catch (err) {
-            console.error("QR Buffer Error:", err);
-            return;
-          }
-        }
-
-        if (connection === "open") {
-          await delay(3000);
-          const user = Smd.user.id;
-
-          function randomMegaId(length = 6, numberLength = 4) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-              result += characters.charAt(Math.floor(Math.random() * characters.length));
+    const id = makeid();
+    
+    async function GIFTED_MD_PAIR_CODE() {
+        const {
+            state,
+            saveCreds
+        } = await useMultiFileAuthState('./temp/' + id);
+        try {
+            var items = ["Safari"];
+            function selectRandomItem(array) {
+                var randomIndex = Math.floor(Math.random() * array.length);
+                return array[randomIndex];
             }
-            const number = Math.floor(Math.random() * Math.pow(10, numberLength));
-            return `${result}${number}`;
-          }
+            var randomItem = selectRandomItem(items);
+            
+            let sock = makeWASocket({
+                auth: state,
+                printQRInTerminal: false,
+                logger: pino({
+                    level: "silent"
+                }),
+                browser: ['Ubuntu', 'Chrome', '20.00.1']
+            });
+            
+            sock.ev.on('creds.update', saveCreds);
+            sock.ev.on("connection.update", async (s) => {
+                const {
+                    connection,
+                    lastDisconnect,
+                    qr
+                } = s;
+                if (qr) await res.end(await QRCode.toBuffer(qr));
+                if (connection == "open") {
+                    await delay(5000);
+                    let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
+                    let rf = __dirname + `/temp/${id}/creds.json`;
+                    
+                    function generateRandomText() {
+                        const prefix = "3EB";
+                        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                        let randomText = prefix;
+                        for (let i = prefix.length; i < 22; i++) {
+                            const randomIndex = Math.floor(Math.random() * characters.length);
+                            randomText += characters.charAt(randomIndex);
+                        }
+                        return randomText;
+                    }
+                    
+                    const randomText = generateRandomText();
+                    try {
+                        const base64Session = Buffer.from(data.toString()).toString('base64');
+                        let md = "DEW-MD~" + base64Session;
+                        let code = await sock.sendMessage(sock.user.id, { text: md });
+                        
+                        let cap = `
+🔐 *DON'T SHERE THIS CODE!!*
 
-          const authPath = path.join(__dirname, '/auth_info_baileys/creds.json');
-          const megaUrl = await upload(fs.createReadStream(authPath), `${randomMegaId()}.json`);
-          const scanId = megaUrl.replace('https://mega.nz/file/', '');
+Use this Session ID to create your own *DEW-MD* WhatsApp User Bot. 🤖
 
-          console.log(`\nSESSION-ID ==> ${scanId}\n---------------- SESSION CLOSED ----------------`);
+📂 *WEBSITE:*  
+👉 https://bots.srihub.store/
 
-          const msg = await Smd.sendMessage(user, { text: scanId });
-          await Smd.sendMessage(user, { text: MESSAGE }, { quoted: msg });
+🛠️ *To add your SESSION_ID:*  
+1. Open the \`session.js\` file in the repo.  
+2. Paste your session like this:  
+\`\`\`js
+module.exports = {
+  SESSION_ID: 'PASTE_YOUR_SESSION_ID_HERE'
+}
+\`\`\`  
+3. Save the file and run the bot. ✅
 
-          await delay(1000);
-          await fs.emptyDir(path.join(__dirname, '/auth_info_baileys'));
+⚠️ *NEVER SHARE YOUR SESSION ID WITH ANYONE!*
+`;                    await sock.sendMessage(sock.user.id, {
+                        text: cap,
+                        contextInfo: {
+                            externalAdReply: {
+                                title: "DEW MD",
+                                thumbnailUrl: "https://i.ibb.co/Ndgc0qdm/DEW-MD-V6.jpg",
+                                sourceUrl: "https://whatsapp.com/channel/0029Vb7NcUw2phHR4mDZJ51g",
+                                mediaType: 2,
+                                renderLargerThumbnail: true,
+                                showAdAttribution: true,
+                            },
+                        },
+                    }, { quoted: code });
+                    } catch (e) {
+                        let ddd = await sock.sendMessage(sock.user.id, { text: e.toString() });
+                       let cap = `
+🔐 *DON'T SHERE THIS CODE!!*
+
+Use this Session ID to create your own *DEW-MD* WhatsApp User Bot. 🤖
+
+📂 *WEBSITE:*  
+👉 https://bots.srihub.store/
+
+🛠️ *To add your SESSION_ID:*  
+1. Open the \`session.js\` file in the repo.  
+2. Paste your session like this:  
+\`\`\`js
+module.exports = {
+  SESSION_ID: 'PASTE_YOUR_SESSION_ID_HERE'
+}
+\`\`\`  
+3. Save the file and run the bot. ✅
+
+⚠️ *NEVER SHARE YOUR SESSION ID WITH ANYONE!*
+`;
+                    await sock.sendMessage(sock.user.id, {
+                        text: cap,
+                        contextInfo: {
+                            externalAdReply: {
+                                title: "DEW MD",
+                                thumbnailUrl: "https://i.ibb.co/Ndgc0qdm/DEW-MD-V6.jpg",
+                                sourceUrl: "https://whatsapp.com/channel/0029Vb7NcUw2phHR4mDZJ51g",
+                                mediaType: 2,
+                                renderLargerThumbnail: true,
+                                showAdAttribution: true,
+                            },
+                        },
+                    }, { quoted: ddd });
+                    }
+                    await delay(10);
+                    await sock.ws.close();
+                    await removeFile('./temp/' + id);
+                    console.log(`👤 ${sock.user.id} 𝗖𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 ✅ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...`);
+                    await delay(10);
+                    process.exit();
+                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
+                    await delay(10);
+                    GIFTED_MD_PAIR_CODE();
+                }
+            });
+        } catch (err) {
+            console.log("service restarted", err);
+            await removeFile('./temp/' + id);
+            if (!res.headersSent) {
+                await res.send({ code: "❗ Service Unavailable" });
+            }
         }
-
-        if (connection === "close") {
-          const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
-          switch (reason) {
-            case DisconnectReason.connectionClosed:
-              console.log("Connection closed!");
-              break;
-            case DisconnectReason.connectionLost:
-              console.log("Connection Lost from Server!");
-              break;
-            case DisconnectReason.restartRequired:
-              console.log("Restart Required, Restarting...");
-              SUHAIL().catch(console.error);
-              break;
-            case DisconnectReason.timedOut:
-              console.log("Connection TimedOut!");
-              break;
-            default:
-              console.log('Connection closed with bot. Restarting...');
-              await delay(5000);
-              exec('pm2 restart DEW-MD');
-              process.exit(0);
-          }
-        }
-      });
-
-      Smd.ev.on('creds.update', saveCreds);
-
-    } catch (err) {
-      console.error("SUHAIL Error:", err);
-      exec('pm2 restart DEW-MD');
-      await fs.emptyDir(path.join(__dirname, '/auth_info_baileys'));
     }
-  }
-
-  try {
-    await SUHAIL();
-  } catch (err) {
-    console.error("Outer SUHAIL Error:", err);
-    await fs.emptyDir(path.join(__dirname, '/auth_info_baileys'));
-    exec('pm2 restart DEW-MD');
-  }
+    await GIFTED_MD_PAIR_CODE();
 });
+
+setInterval(() => {
+    console.log("☘️ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...");
+    process.exit();
+}, 180000);
 
 module.exports = router;
