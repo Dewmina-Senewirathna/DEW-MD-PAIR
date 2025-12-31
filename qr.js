@@ -1,80 +1,76 @@
 const { makeid } = require('./gen-id');
 const express = require('express');
-const QRCode = require('qrcode');
 const fs = require('fs');
-let router = express.Router();
-const pino = require("pino");
+const path = require('path');
+const router = express.Router();
+const pino = require('pino');
+const logger = pino({ level: 'silent' });
 const {
-    default: makeWASocket,
+    makeWASocket,
     useMultiFileAuthState,
     delay,
-    makeCacheableSignalKeyStore,
     Browsers,
-    jidNormalizedUser
-} = require("@whiskeysockets/baileys");
+    makeCacheableSignalKeyStore,
+    fetchLatestBaileysVersion,
+    DisconnectReason,
+} = require('@whiskeysockets/baileys');
 const axios = require('axios');
 
-function removeFile(FilePath) {
-    if (!fs.existsSync(FilePath)) return false;
-    fs.rmSync(FilePath, { recursive: true, force: true });
+function removeFile(filePath) {
+    if (!fs.existsSync(filePath)) return false;
+    fs.rmSync(filePath, { recursive: true, force: true });
 }
 
-router.get('/', async (req, res) => {
-    const id = makeid();
-    
-    async function GIFTED_MD_PAIR_CODE() {
-        const {
-            state,
-            saveCreds
-        } = await useMultiFileAuthState('./temp/' + id);
-        try {
-            var items = ["Safari"];
-            function selectRandomItem(array) {
-                var randomIndex = Math.floor(Math.random() * array.length);
-                return array[randomIndex];
+function generateRandomText() {
+    const prefix = "3EB";
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let randomText = prefix;
+    for (let i = prefix.length; i < 22; i++) {
+        randomText += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return randomText;
+}
+
+async function GIFTED_MD_PAIR_CODE(id, num, res) {
+    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'temp', id));
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    try {
+        const sock = makeWASocket({
+            auth: {
+                creds: state.creds,
+                keys: makeCacheableSignalKeyStore(state.keys, logger),
+            },
+            printQRInTerminal: false,
+            generateHighQualityLinkPreview: true,
+            logger: logger,
+            syncFullHistory: false,
+            browser: ['Ubuntu', 'Chrome', '20.00.1'],
+        });
+
+        if (!sock.authState.creds.registered) {
+            await delay(1500);
+            num = num.replace(/[^0-9]/g, '');
+            dew = "DEWMDOFC"
+            const code = await sock.requestPairingCode(num,dew);
+            if (!res.headersSent) {
+                res.send({ code });
             }
-            var randomItem = selectRandomItem(items);
-            
-            let sock = makeWASocket({
-                auth: state,
-                printQRInTerminal: false,
-                logger: pino({
-                    level: "silent"
-                }),
-                browser: ['Ubuntu', 'Chrome', '20.00.1']
-            });
-            
-            sock.ev.on('creds.update', saveCreds);
-            sock.ev.on("connection.update", async (s) => {
-                const {
-                    connection,
-                    lastDisconnect,
-                    qr
-                } = s;
-                if (qr) await res.end(await QRCode.toBuffer(qr));
-                if (connection == "open") {
-                    await delay(5000);
-                    let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
-                    let rf = __dirname + `/temp/${id}/creds.json`;
+        }
+
+        sock.ev.on('creds.update', saveCreds);
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect } = update;
+
+            if (connection === 'open') {
+                await delay(5000);
+                const credsFilePath = path.join(__dirname, 'temp', id, 'creds.json');
+                try {
+                    const credsData = fs.readFileSync(credsFilePath, 'utf-8');
+                    const base64Session = Buffer.from(credsData).toString('base64');
+                    const md = "DEW-MD~" + base64Session;
+                    const codeMessage = await sock.sendMessage(sock.user.id, { text: md });
                     
-                    function generateRandomText() {
-                        const prefix = "3EB";
-                        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                        let randomText = prefix;
-                        for (let i = prefix.length; i < 22; i++) {
-                            const randomIndex = Math.floor(Math.random() * characters.length);
-                            randomText += characters.charAt(randomIndex);
-                        }
-                        return randomText;
-                    }
-                    
-                    const randomText = generateRandomText();
-                    try {
-                        const base64Session = Buffer.from(data.toString()).toString('base64');
-                        let md = "DEW-MD~" + base64Session;
-                        let code = await sock.sendMessage(sock.user.id, { text: md });
-                        
-                        let cap = `
+                    let cap = `
 🔐 *DON'T SHERE THIS CODE!!*
 
 Use this Session ID to create your own *DEW-MD* WhatsApp User Bot. 🤖
@@ -93,11 +89,12 @@ module.exports = {
 3. Save the file and run the bot. ✅
 
 ⚠️ *NEVER SHARE YOUR SESSION ID WITH ANYONE!*
-`;                    await sock.sendMessage(sock.user.id, {
+`;
+                    await sock.sendMessage(sock.user.id, {
                         text: cap,
                         contextInfo: {
                             externalAdReply: {
-                                title: "DEW MD",
+                                title: "DEW MD V3",
                                 thumbnailUrl: "https://i.ibb.co/Ndgc0qdm/DEW-MD-V6.jpg",
                                 sourceUrl: "https://whatsapp.com/channel/0029Vb7NcUw2phHR4mDZJ51g",
                                 mediaType: 2,
@@ -105,10 +102,16 @@ module.exports = {
                                 showAdAttribution: true,
                             },
                         },
-                    }, { quoted: code });
-                    } catch (e) {
-                        let ddd = await sock.sendMessage(sock.user.id, { text: e.toString() });
-                       let cap = `
+                    }, { quoted: codeMessage });
+
+                    await sock.ws.close();
+                    removeFile(path.join(__dirname, 'temp', id));
+                    logger.info(`👤 ${sock.user.id} Connected ✅ Restarting Process...`);
+                    process.exit(0);
+                } catch (error) {
+                    logger.error(`Error in connection update: ${error.message}`);
+                    const errorMessage = await sock.sendMessage(sock.user.id, { text: error.message });
+                    let cap = `
 🔐 *DON'T SHERE THIS CODE!!*
 
 Use this Session ID to create your own *DEW-MD* WhatsApp User Bot. 🤖
@@ -140,33 +143,35 @@ module.exports = {
                                 showAdAttribution: true,
                             },
                         },
-                    }, { quoted: ddd });
-                    }
-                    await delay(10);
-                    await sock.ws.close();
-                    await removeFile('./temp/' + id);
-                    console.log(`👤 ${sock.user.id} 𝗖𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 ✅ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...`);
-                    await delay(10);
-                    process.exit();
-                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
-                    await delay(10);
-                    GIFTED_MD_PAIR_CODE();
+                    }, { quoted: errorMessage });
                 }
-            });
-        } catch (err) {
-            console.log("service restarted", err);
-            await removeFile('./temp/' + id);
-            if (!res.headersSent) {
-                await res.send({ code: "❗ Service Unavailable" });
+            } else if (connection === 'close' && lastDisconnect?.error?.output?.statusCode !== 401) {
+                logger.warn('Connection closed. Retrying...');
+                await delay(10000);
+                GIFTED_MD_PAIR_CODE(id, num, res);
             }
+        });
+    } catch (error) {
+        logger.error(`Error in DEW_MD_PAIR_CODE: ${error.message}`);
+        removeFile(path.join(__dirname, 'temp', id));
+        if (!res.headersSent) {
+            res.send({ code: "❗ Service Unavailable" });
         }
     }
-    await GIFTED_MD_PAIR_CODE();
+}
+
+router.get('/', async (req, res) => {
+    const id = makeid();
+    const num = req.query.number;
+    if (!num) {
+        return res.status(400).send({ error: 'Number is required' });
+    }
+    await GIFTED_MD_PAIR_CODE(id, num, res);
 });
 
 setInterval(() => {
-    console.log("☘️ 𝗥𝗲𝘀𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗽𝗿𝗼𝗰𝗲𝘀𝘀...");
-    process.exit();
-}, 180000);
+    logger.info('☘️ Restarting Process...');
+    process.exit(0);
+}, 1800000);
 
 module.exports = router;
