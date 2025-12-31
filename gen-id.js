@@ -1,10 +1,10 @@
-function makeid(num = 4) {
-  let result = "";
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  var characters9 = characters.length;
-  for (var i = 0; i < num; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters9));
+function makeid(length = 6) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+  let id = ''
+  for (let i = 0; i < length; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)]
   }
-  return result;
+  return id
 }
-module.exports = {makeid};
+
+module.exports = { makeid }
