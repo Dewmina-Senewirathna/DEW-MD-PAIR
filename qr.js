@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
                 logger: pino({
                     level: "silent"
                 }),
-                browser: Browsers.macOS("Desktop"),
+                browser: ['Ubuntu', 'Chrome', '20.00.1'],
             });
             
             sock.ev.on('creds.update', saveCreds);
