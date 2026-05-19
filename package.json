@@ -12,6 +12,7 @@
     "@whiskeysockets/baileys": "github:nbbb15092/Baileys#per-recipient-enc-error",              
     "@adiwajshing/keyed-db": "^0.2.4",
     "qrcode": "^1.5.3",
+    "axios": "latest",
     "awesome-phonenumber": "^2.64.0",
     "pino": "^8.1.0",
     "phone" : "3.1.30",
