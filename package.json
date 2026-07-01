@@ -9,7 +9,7 @@
      "restart": "pm2 restart pair-main"
     },
   "dependencies": {
-    "@whiskeysockets/baileys": "github:nbbb15092/Baileys#per-recipient-enc-error",              
+    "@whiskeysockets/baileys": "npm:@rexxhayanasi/elaina-baileys",              
     "@adiwajshing/keyed-db": "^0.2.4",
     "qrcode": "^1.5.3",
     "axios": "latest",
